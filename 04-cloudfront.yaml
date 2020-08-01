@@ -1,0 +1,107 @@
+﻿# Static Site Hosting on AWS
+#
+# Copyright © 2019 - 2020, Brendon Matheson
+#
+# http://brendonmatheson.com/
+#
+# This is free software: you can redistribute it and/or modify it under the terms
+# of the GNU General Public License v2 as published by the Free Software
+# Foundation.
+#
+# This is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this code.  If not, see http://www.gnu.org/licenses/gpl-2.0.html
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "Creates a CloudFront distribution and Route53 DNS records for the edge service of your static site"
+
+Parameters: 
+  HostedZoneId:
+    Type: "String"
+    Default: "TODO"
+    Description: "The ID of the hosted zone for this site's domain name"
+  NakedDomainName:
+    Type: "String"
+    Default: "yourdomain.com"
+    Description: "The 'naked' version of your site domain name"
+  RedirectorDomainName:
+    Type: "String"
+    Default: "www.yourdomain.com"
+    Description: "The 'www' version of your site domain name"
+
+Resources:
+
+  NakedDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Ref "NakedDomainName"
+        DefaultCacheBehavior:
+          ForwardedValues:
+            QueryString: True
+          TargetOriginId: !Sub "S3-${NakedDomainName}"
+          ViewerProtocolPolicy: "redirect-to-https"
+        DefaultRootObject: "index.html"
+        Enabled: True
+        Origins:
+          - DomainName: !Sub "${NakedDomainName}.s3.amazonaws.com"
+            Id: !Sub "S3-${NakedDomainName}"
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        PriceClass: "PriceClass_100"
+        ViewerCertificate:
+          AcmCertificateArn:
+            Fn::Import:
+              !Sub "${NakedDomainName}-certificate-arn"
+          MinimumProtocolVersion: "TLSv1"
+          SslSupportMethod: "sni-only"
+
+  NakedRecord:
+    Type: "AWS::Route53::RecordSet"
+    Properties: 
+      AliasTarget:
+        DNSName: !GetAtt "NakedDistribution.DomainName"
+        HostedZoneId: "Z2FDTNDATAQYW2"
+      HostedZoneId: !Ref "HostedZoneId"
+      Name: !Ref "NakedDomainName"
+      Type: "A"
+
+  RedirectDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Ref "RedirectorDomainName"
+        DefaultCacheBehavior:
+          ForwardedValues:
+            QueryString: True
+          TargetOriginId: !Sub "S3-${RedirectorDomainName}"
+          ViewerProtocolPolicy: "allow-all"
+        Enabled: True
+        Origins:
+          - DomainName: !Sub "${RedirectorDomainName}.s3-website-ap-southeast-1.amazonaws.com"
+            Id: !Sub "S3-${RedirectorDomainName}"
+            CustomOriginConfig:
+              OriginProtocolPolicy: "match-viewer"
+        PriceClass: "PriceClass_100"
+        ViewerCertificate:
+          AcmCertificateArn:
+            Fn::Import:
+              !Sub "${RedirectorDomainName}-certificate-arn"
+          MinimumProtocolVersion: "TLSv1"
+          SslSupportMethod: "sni-only"
+
+  RedirectRecord:
+    Type: "AWS::Route53::RecordSet"
+    Properties: 
+      AliasTarget:
+        DNSName: !GetAtt "RedirectDistribution.DomainName"
+        HostedZoneId: "Z2FDTNDATAQYW2"
+      HostedZoneId: "Z03655591LVXYV8UYZL0F"
+      Name: !Ref "RedirectorDomainName"
+      Type: "A"

@@ -1,0 +1,56 @@
+﻿# Static Site Hosting on AWS
+#
+# Copyright © 2019 - 2020, Brendon Matheson
+#
+# http://brendonmatheson.com/
+#
+# This is free software: you can redistribute it and/or modify it under the terms
+# of the GNU General Public License v2 as published by the Free Software
+# Foundation.
+#
+# This is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this code.  If not, see http://www.gnu.org/licenses/gpl-2.0.html
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "Creates certificates for the static site.  Certificates must be created in us-east-1 so they can be used with CloudFront"
+
+Parameters: 
+  NakedDomainName:
+    Type: "String"
+    Default: "yourdomain.com"
+    Description: "The 'naked' version of your site domain name"
+  RedirectorDomainName:
+    Type: "String"
+    Default: "www.yourdomain.com"
+    Description: "The 'www' version of your site domain name"
+
+Resources:
+
+  NakedCertificate:
+    Type: "AWS::CertificateManager::Certificate"
+    Properties:
+      DomainName: !Ref "NakedDomainName"
+      ValidationMethod: "DNS"
+
+  RedirectorCertificate:
+    Type: "AWS::CertificateManager::Certificate"
+    Properties:
+      DomainName: !Ref "RedirectorDomainName"
+      ValidationMethod: "DNS"
+
+Outputs:
+
+  NakedCertificateArn:
+    Value: !Ref "NakedCertificate"
+    Export:
+      Name: !Sub "${NakedDomainName}-certificate-arn"
+
+  RedirectorCertificateArn:
+    Value: !Ref "RedirectorCertificate"
+    Export:
+      Name: !Sub "${RedirectorDomainName}-certificate-arn"

@@ -1,0 +1,58 @@
+﻿# Static Site Hosting on AWS
+#
+# Copyright © 2019 - 2020, Brendon Matheson
+#
+# http://brendonmatheson.com/
+#
+# This is free software: you can redistribute it and/or modify it under the terms
+# of the GNU General Public License v2 as published by the Free Software
+# Foundation.
+#
+# This is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this code.  If not, see http://www.gnu.org/licenses/gpl-2.0.html
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "Creates a private bucket for site access logs"
+
+Parameters: 
+  LogBucketName: 
+    Type: String
+    Default: "log-bucket-name"
+    Description: "The name of the logs bucket"
+
+Resources:
+
+  #
+  # Log Bucket
+  #
+
+  LogBucket:
+    Type: "AWS::S3::Bucket"
+    Properties: 
+      BucketName:
+        Ref: "LogBucketName"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true 
+      AccessControl: "LogDeliveryWrite"
+
+  LogBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties: 
+      Bucket: !Ref "LogBucket"
+      PolicyDocument:
+        Statement:
+        - Sid: "Permit access log delivery by AWS ID for Log Delivery service"
+          Principal:
+            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+          Action:
+          - "s3:PutObject"
+          Effect: "Allow"
+          Resource: !Sub "arn:aws:s3:::${LogBucketName}/*"
