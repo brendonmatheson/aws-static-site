@@ -1,4 +1,4 @@
-﻿# Static Site Hosting on AWS
+# Static Site Hosting on AWS
 #
 # Copyright © 2019 - 2020, Brendon Matheson
 #
@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License along with
 # this code.  If not, see http://www.gnu.org/licenses/gpl-2.0.html
-
+---
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description: "Creates certificates for the static site.  Certificates must be created in us-east-1 so they can be used with CloudFront"
