@@ -24,10 +24,6 @@ Parameters:
     Type: "String"
     Default: "yourdomain.com"
     Description: "The 'naked' version of your site domain name"
-  RedirectorDomainName:
-    Type: "String"
-    Default: "www.yourdomain.com"
-    Description: "The 'www' version of your site domain name"
 
 Resources:
 
@@ -40,7 +36,7 @@ Resources:
   RedirectorCertificate:
     Type: "AWS::CertificateManager::Certificate"
     Properties:
-      DomainName: !Ref "RedirectorDomainName"
+      DomainName: !Sub "www.${NakedDomainName}"
       ValidationMethod: "DNS"
 
 Outputs:
@@ -48,9 +44,19 @@ Outputs:
   NakedCertificateArn:
     Value: !Ref "NakedCertificate"
     Export:
-      Name: !Sub "${NakedDomainName}-certificate-arn"
+      Name: !Sub
+        - "${DashedNakedDomainName}-certificate-arn"
+        - DashedNakedDomainName:
+            Fn::Join:
+              - "-"
+              - Fn::Split: [ ".", !Ref "NakedDomainName" ]
 
   RedirectorCertificateArn:
     Value: !Ref "RedirectorCertificate"
     Export:
-      Name: !Sub "${RedirectorDomainName}-certificate-arn"
+      Name: !Sub
+        - "www-${DashedNakedDomainName}-certificate-arn"
+        - DashedNakedDomainName:
+            Fn::Join:
+              - "-"
+              - Fn::Split: [ ".", !Ref "NakedDomainName" ]

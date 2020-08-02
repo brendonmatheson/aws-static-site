@@ -28,10 +28,6 @@ Parameters:
     Type: String
     Default: "yourdomain.com"
     Description: "The naked domain name which will be used as the main site bucket"
-  RedirectorDomainName:
-    Type: String
-    Default: "www.yourdomain.com"
-    Description: "The www domain name which will be used on a redirector bucket."
   RedirectorProtocol:
     Type: String
     Default: "http"
@@ -83,7 +79,7 @@ Resources:
   RedirectorBucket:
     Type: "AWS::S3::Bucket"
     Properties:
-      BucketName: !Ref "RedirectorDomainName"
+      BucketName: !Sub "www.${NakedDomainName}"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         IgnorePublicAcls: true
@@ -92,4 +88,4 @@ Resources:
       WebsiteConfiguration:
         RedirectAllRequestsTo:
           HostName: !Ref "NakedDomainName"
-          Protocol: "http"
+          Protocol: !Ref "RedirectorProtocol"

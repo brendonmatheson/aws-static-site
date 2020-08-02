@@ -1,4 +1,4 @@
-# S3 Static Site
+# AWS Static Site
 
 This CloudFormation template creates hosting in S3 for a static website with logging and redirectors for other hostnames.
 

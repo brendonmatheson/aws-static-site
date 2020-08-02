@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License along with
 # this code.  If not, see http://www.gnu.org/licenses/gpl-2.0.html
-
+---
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description: "Creates a private bucket for site access logs"
@@ -56,3 +56,4 @@ Resources:
           - "s3:PutObject"
           Effect: "Allow"
           Resource: !Sub "arn:aws:s3:::${LogBucketName}/*"
+
