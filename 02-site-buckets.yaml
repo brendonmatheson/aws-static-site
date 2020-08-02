@@ -63,6 +63,15 @@ Resources:
           - "s3:GetObject"
           Effect: "Allow"
           Resource: !Sub "arn:aws:s3:::${NakedDomainName}/*"
+        - Sid: "Permit buildsystem to write to the site bucket"
+          Principal:
+            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:user/buildsystem"
+          Action:
+          - "s3:*"
+          Effect: "Allow"
+          Resource:
+          - !Sub "arn:aws:s3:::${NakedDomainName}"
+          - !Sub "arn:aws:s3:::${NakedDomainName}/*"
 
   #
   # Redirector Buckets
