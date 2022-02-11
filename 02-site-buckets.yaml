@@ -28,10 +28,6 @@ Parameters:
     Type: String
     Default: "yourdomain.com"
     Description: "The naked domain name which will be used as the main site bucket"
-  RedirectorProtocol:
-    Type: String
-    Default: "http"
-    Description: "If you are using S3 hosting only, then this should be http.  If you are also setting up CloudFront with the stack 03-cloud-front.yaml then this should be https"
 
 Resources:
 
@@ -43,35 +39,17 @@ Resources:
     Type: "AWS::S3::Bucket"
     Properties:
       BucketName: !Ref "NakedDomainName"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html
       LoggingConfiguration:
         DestinationBucketName: !Ref "LogBucketName"
         LogFilePrefix: !Sub "${NakedDomainName}/"
-
-  SiteBucketPolicy:
-    Type: "AWS::S3::BucketPolicy"
-    Properties:
-      Bucket: !Ref "SiteBucket"
-      PolicyDocument:
-        Statement:
-        - Sid: "Permit public read access to the site bucket"
-          Principal:
-            AWS: "*"
-          Action:
-          - "s3:GetObject"
-          Effect: "Allow"
-          Resource: !Sub "arn:aws:s3:::${NakedDomainName}/*"
-        - Sid: "Permit buildsystem to write to the site bucket"
-          Principal:
-            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:user/buildsystem"
-          Action:
-          - "s3:*"
-          Effect: "Allow"
-          Resource:
-          - !Sub "arn:aws:s3:::${NakedDomainName}"
-          - !Sub "arn:aws:s3:::${NakedDomainName}/*"
 
   #
   # Redirector Buckets
@@ -89,4 +67,15 @@ Resources:
       WebsiteConfiguration:
         RedirectAllRequestsTo:
           HostName: !Ref "NakedDomainName"
-          Protocol: !Ref "RedirectorProtocol"
+          Protocol: "https"
+
+Outputs:
+  SiteBucketId:
+    Value: !Ref "SiteBucket"
+    Export:
+      Name: !Sub
+        - "${DashedNakedDomainName}-site-bucket-id"
+        - DashedNakedDomainName:
+            Fn::Join:
+              - "-"
+              - Fn::Split: [ ".", !Ref "NakedDomainName" ]

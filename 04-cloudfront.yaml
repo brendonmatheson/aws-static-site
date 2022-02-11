@@ -35,6 +35,12 @@ Parameters:
 
 Resources:
 
+  OAI:
+    Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+    Properties: 
+      CloudFrontOriginAccessIdentityConfig: 
+        Comment: !Sub "OAI-${NakedDomainName}"
+
   NakedDistribution:
     Type: "AWS::CloudFront::Distribution"
     Properties:
@@ -52,7 +58,7 @@ Resources:
           - DomainName: !Sub "${NakedDomainName}.s3.amazonaws.com"
             Id: !Sub "S3-${NakedDomainName}"
             S3OriginConfig:
-              OriginAccessIdentity: ""
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${OAI}"
         PriceClass: "PriceClass_100"
         ViewerCertificate:
           AcmCertificateArn:
@@ -113,3 +119,23 @@ Resources:
       HostedZoneId: !Ref "HostedZoneId"
       Name: !Sub "www.${NakedDomainName}"
       Type: "A"
+
+Outputs:
+  OaiId:
+    Value: !Ref "OAI"
+    Export:
+      Name: !Sub
+        - "${DashedNakedDomainName}-oai-id"
+        - DashedNakedDomainName:
+            Fn::Join:
+              - "-"
+              - Fn::Split: [ ".", !Ref "NakedDomainName" ]
+  OaiPrincipal:
+    Value: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${OAI}"
+    Export:
+      Name: !Sub
+        - "${DashedNakedDomainName}-oai-principal"
+        - DashedNakedDomainName:
+            Fn::Join:
+              - "-"
+              - Fn::Split: [ ".", !Ref "NakedDomainName" ]

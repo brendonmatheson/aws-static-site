@@ -49,11 +49,16 @@ Resources:
       Bucket: !Ref "LogBucket"
       PolicyDocument:
         Statement:
-        - Sid: "Permit access log delivery by AWS ID for Log Delivery service"
-          Principal:
-            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
-          Action:
-          - "s3:PutObject"
-          Effect: "Allow"
-          Resource: !Sub "arn:aws:s3:::${LogBucketName}/*"
+          - Sid: "Permit access log delivery by AWS ID for Log Delivery service"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "s3:PutObject"
+            Effect: "Allow"
+            Resource: !Sub "arn:aws:s3:::${LogBucketName}/*"
 
+Outputs:
+  LogBucketName:
+    Value: !Ref "LogBucket"
+    Export:
+      Name: "log-bucket-name"
