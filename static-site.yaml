@@ -172,13 +172,6 @@ Resources:
       Bucket: !Ref "SiteBucket"
       PolicyDocument:
         Statement:
-        # - Sid: "Permit public read access to the site bucket"
-        #   Principal:
-        #     AWS: "*"
-        #   Action:
-        #   - "s3:GetObject"
-        #   Effect: "Allow"
-        #   Resource: !Sub "arn:aws:s3:::${NakedDomainName}/*"
         - Sid: "BuildSystemWriteSiteBucket"
           Principal:
             AWS: !Sub "arn:aws:iam::${AWS::AccountId}:user/buildsystem"
