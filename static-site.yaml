@@ -1,6 +1,6 @@
 # Static Site Hosting on AWS
 #
-# Copyright © 2019 - 2020, Brendon Matheson
+# Copyright © 2019 - 2022, Brendon Matheson
 #
 # http://brendonmatheson.com/
 #
@@ -17,23 +17,77 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: "Creates a CloudFront distribution and Route53 DNS records for the edge service of your static site"
+Description: "Creates a static website stored in AWS S3 and using CloudFront with a 'naked' domain with inbound redirection from a 'www' domain and access logging"
 
-Parameters: 
+Parameters:
   HostedZoneId:
     Type: "String"
     Default: "TODO"
     Description: "The ID of the hosted zone for this site's domain name"
-  NakedDomainName:
-    Type: "String"
+  NakedDomainName: 
+    Type: String
     Default: "yourdomain.com"
-    Description: "The 'naked' version of your site domain name"
-  BucketRegion:
-    Type: "String"
-    Default: "TODO"
-    Description: "The region where you created the site (and log) buckets"
+    Description: "The naked domain name which will be used as the main site bucket"
 
 Resources:
+
+  #
+  # Site Bucket
+  #
+
+  SiteBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Ref "NakedDomainName"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      LoggingConfiguration:
+        DestinationBucketName: !ImportValue "log-bucket-name"
+        LogFilePrefix: !Sub "${NakedDomainName}/"
+
+  #
+  # Redirector Bucket
+  #
+
+  RedirectorBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Sub "www.${NakedDomainName}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      WebsiteConfiguration:
+        RedirectAllRequestsTo:
+          HostName: !Ref "NakedDomainName"
+          Protocol: "https"
+
+  #
+  # Certificates
+  #
+
+  NakedCertificate:
+    Type: "AWS::CertificateManager::Certificate"
+    Properties:
+      DomainName: !Ref "NakedDomainName"
+      ValidationMethod: "DNS"
+
+  RedirectorCertificate:
+    Type: "AWS::CertificateManager::Certificate"
+    Properties:
+      DomainName: !Sub "www.${NakedDomainName}"
+      ValidationMethod: "DNS"
+
+  #
+  # CloudFront
+  #
 
   OAI:
     Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
@@ -61,13 +115,7 @@ Resources:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${OAI}"
         PriceClass: "PriceClass_100"
         ViewerCertificate:
-          AcmCertificateArn:
-            Fn::ImportValue: !Sub
-              - "${DashedNakedDomainName}-certificate-arn"
-              - DashedNakedDomainName:
-                  Fn::Join:
-                    - "-"
-                    - Fn::Split: [ ".", !Ref "NakedDomainName" ]
+          AcmCertificateArn: !Ref "NakedCertificate"
           MinimumProtocolVersion: "TLSv1"
           SslSupportMethod: "sni-only"
 
@@ -94,19 +142,13 @@ Resources:
           ViewerProtocolPolicy: "allow-all"
         Enabled: True
         Origins:
-          - DomainName: !Sub "www.${NakedDomainName}.s3-website-${BucketRegion}.amazonaws.com"
+          - DomainName: !Sub "www.${NakedDomainName}.s3-website-${AWS::Region}.amazonaws.com"
             Id: !Sub "S3-www.${NakedDomainName}"
             CustomOriginConfig:
               OriginProtocolPolicy: "match-viewer"
         PriceClass: "PriceClass_100"
         ViewerCertificate:
-          AcmCertificateArn:
-            Fn::ImportValue: !Sub
-              - "www-${DashedNakedDomainName}-certificate-arn"
-              - DashedNakedDomainName:
-                  Fn::Join:
-                    - "-"
-                    - Fn::Split: [ ".", !Ref "NakedDomainName" ]
+          AcmCertificateArn: !Ref "RedirectorCertificate"
           MinimumProtocolVersion: "TLSv1"
           SslSupportMethod: "sni-only"
 
@@ -120,22 +162,37 @@ Resources:
       Name: !Sub "www.${NakedDomainName}"
       Type: "A"
 
-Outputs:
-  OaiId:
-    Value: !Ref "OAI"
-    Export:
-      Name: !Sub
-        - "${DashedNakedDomainName}-oai-id"
-        - DashedNakedDomainName:
-            Fn::Join:
-              - "-"
-              - Fn::Split: [ ".", !Ref "NakedDomainName" ]
-  OaiPrincipal:
-    Value: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${OAI}"
-    Export:
-      Name: !Sub
-        - "${DashedNakedDomainName}-oai-principal"
-        - DashedNakedDomainName:
-            Fn::Join:
-              - "-"
-              - Fn::Split: [ ".", !Ref "NakedDomainName" ]
+  #
+  # Site Bucket Policy
+  #
+
+  SiteBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref "SiteBucket"
+      PolicyDocument:
+        Statement:
+        # - Sid: "Permit public read access to the site bucket"
+        #   Principal:
+        #     AWS: "*"
+        #   Action:
+        #   - "s3:GetObject"
+        #   Effect: "Allow"
+        #   Resource: !Sub "arn:aws:s3:::${NakedDomainName}/*"
+        - Sid: "BuildSystemWriteSiteBucket"
+          Principal:
+            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:user/buildsystem"
+          Action:
+          - "s3:*"
+          Effect: "Allow"
+          Resource:
+          - !Sub "arn:aws:s3:::${NakedDomainName}"
+          - !Sub "arn:aws:s3:::${NakedDomainName}/*"
+        - Sid: "CloudFrontReadSiteBucket"
+          Principal:
+            AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${OAI}"
+          Effect: "Allow"
+          Action:
+            - "s3:GetObject"
+          Resource:
+          - !Sub "arn:aws:s3:::${NakedDomainName}/*"
