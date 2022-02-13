@@ -1,0 +1,56 @@
+# Static Site Hosting on AWS
+#
+# Copyright © 2019 - 2022, Brendon Matheson
+#
+# http://brendonmatheson.com/
+#
+# This is free software: you can redistribute it and/or modify it under the terms
+# of the GNU General Public License v2 as published by the Free Software
+# Foundation.
+#
+# This is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this code.  If not, see http://www.gnu.org/licenses/gpl-2.0.html
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Transform: AWS::Serverless-2016-10-31
+
+Description: "Creates a CloudFront Function that rewrites URL's that represent directories to end with 'index.html'"
+
+Resources:
+
+  DefaultDocumentFunction:
+    Type: "AWS::CloudFront::Function"
+    Properties: 
+      AutoPublish: True
+      FunctionCode: |
+        function handler(event) {
+            var request = event.request;
+            var uri = request.uri;
+
+            // Check whether the URI is missing a file name.
+            if (uri.endsWith('/')) {
+                request.uri += 'index.html';
+            }
+            
+            // Check whether the URI is missing a file extension.
+            else if (!uri.includes('.')) {
+                request.uri += '/index.html';
+            }
+
+            return request;
+        }
+      FunctionConfig:
+        Comment: "Rewrites directory paths to end with /index.html"
+        Runtime: "cloudfront-js-1.0"
+      Name: "default-document-rewrite"
+
+Outputs:
+  DefaultDocumentFunctionArn:
+    Value: !GetAtt "DefaultDocumentFunction.FunctionMetadata.FunctionARN"
+    Export:
+      Name: "default-document-function-arn"
