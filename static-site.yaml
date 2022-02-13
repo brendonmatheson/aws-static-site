@@ -92,7 +92,7 @@ Resources:
           ViewerProtocolPolicy: "redirect-to-https"
           FunctionAssociations:
             - EventType: "viewer-request"
-              FunctionARN: !ImportValue "default-document-function-arn"
+              FunctionARN: !ImportValue "static-site-rewrite-url-arn"
         DefaultRootObject: "index.html"
         Enabled: True
         Origins:
@@ -114,6 +114,16 @@ Resources:
         HostedZoneId: "Z2FDTNDATAQYW2"
       HostedZoneId: !Ref "HostedZoneId"
       Name: !Ref "NakedDomainName"
+      Type: "A"
+
+  RedirectRecord:
+    Type: "AWS::Route53::RecordSet"
+    Properties: 
+      AliasTarget:
+        DNSName: !GetAtt "NakedDistribution.DomainName"
+        HostedZoneId: "Z2FDTNDATAQYW2"
+      HostedZoneId: !Ref "HostedZoneId"
+      Name: !Sub "www.${NakedDomainName}"
       Type: "A"
 
   #
