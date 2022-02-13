@@ -45,3 +45,6 @@ The function is provided in the CloudFormation template [default-document-functi
 
 Deploy the function using either the CloudFormation console or CLI and give it the stack name `default-document-function-arn`.
 
+References:
+
+- [Add index.html to request URLs that don’t include a file name](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/example-function-add-index.html)
