@@ -61,7 +61,7 @@ Resources:
                 - ""
                 - - "https://"
                   - !ImportValue "service-catalog-bucket-regional-domain-name"
-                  - "/static-site-log-bucket.yaml"
+                  - "/0.0.0.0/static-site-log-bucket.yaml"
       SupportEmail: !Ref "SupportEmail"
       Tags:
         - Key: "bjm-staticsite-version"
@@ -99,7 +99,7 @@ Resources:
                 - ""
                 - - "https://"
                   - !ImportValue "service-catalog-bucket-regional-domain-name"
-                  - "/static-site-rewrite-url-function.yaml"
+                  - "/0.0.0.0/static-site-rewrite-url-function.yaml"
       SupportEmail: !Ref "SupportEmail"
       Tags:
         - Key: "bjm-staticsite-version"
@@ -137,7 +137,7 @@ Resources:
                 - ""
                 - - "https://"
                   - !ImportValue "service-catalog-bucket-regional-domain-name"
-                  - "/static-site-instance.yaml"
+                  - "/0.0.0.0/static-site-instance.yaml"
       SupportEmail: !Ref "SupportEmail"
       Tags:
         - Key: "bjm-staticsite-version"
