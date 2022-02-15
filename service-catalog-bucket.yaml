@@ -1,0 +1,104 @@
+# Static Site Hosting on AWS
+#
+# Copyright © 2019 - 2022, Brendon Matheson
+#
+# http://brendonmatheson.com/
+#
+# This is free software: you can redistribute it and/or modify it under the terms
+# of the GNU General Public License v2 as published by the Free Software
+# Foundation.
+#
+# This is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this code.  If not, see http://www.gnu.org/licenses/gpl-2.0.html
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "Service Catalog Bucket for Static Site products"
+
+Resources:
+
+  ServiceCatalogBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: "bjm-staticsite-version"
+          Value: "0.0.0.0"
+        - Key: "org"
+          Value: "bjm"
+        - Key: "product"
+          Value: "staticsite"
+        - Key: "module"
+          Value: "servicecatalog"
+
+  # ServiceCatalogBucketPolicy
+  #
+  # Denies all access for any request not using TLS
+  ServiceCatalogBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref "ServiceCatalogBucket"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Deny"
+            Action:
+              - "s3:*"
+            Resource:
+              - !Sub "arn:aws:s3:::${ServiceCatalogBucket}"
+              - !Sub "arn:aws:s3:::${ServiceCatalogBucket}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+            Principal: "*"
+
+  ServiceCatalogBucketReadWritePolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    DependsOn: "ServiceCatalogBucket"
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "ReadWriteServiceCatalogBucket"
+            Effect: "Allow"
+            Action:
+              - "s3:GetBucketAcl"
+              - "s3:GetBucketLocation"
+              - "s3:GetObject"
+              - "s3:ListBucket"
+              - "s3:PutObject"
+            Resource:
+              - !Sub "arn:aws:s3:::${ServiceCatalogBucket}"
+              - !Sub "arn:aws:s3:::${ServiceCatalogBucket}/*"
+
+  ServiceCatalogBucketReadPolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    DependsOn: "ServiceCatalogBucket"
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "ReadServiceCatalogBucket"
+            Effect: "Allow"
+            Action:
+              - "s3:GetBucketAcl"
+              - "s3:GetBucketLocation"
+              - "s3:GetObject"
+              - "s3:ListBucket"
+            Resource:
+              - !Sub "arn:aws:s3:::${ServiceCatalogBucket}"
+              - !Sub "arn:aws:s3:::${ServiceCatalogBucket}/*"
+
+Outputs:
+  ServiceCatalogBucketName:
+    Value: !GetAtt "ServiceCatalogBucket.RegionalDomainName"
+    Export:
+      Name: "service-catalog-bucket-regional-domain-name"

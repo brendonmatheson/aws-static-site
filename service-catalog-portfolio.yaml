@@ -1,0 +1,157 @@
+# Static Site Hosting on AWS
+#
+# Copyright © 2019 - 2022, Brendon Matheson
+#
+# http://brendonmatheson.com/
+#
+# This is free software: you can redistribute it and/or modify it under the terms
+# of the GNU General Public License v2 as published by the Free Software
+# Foundation.
+#
+# This is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this code.  If not, see http://www.gnu.org/licenses/gpl-2.0.html
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "Service Catalog Portfolio for Static Site products"
+
+Parameters:
+  SupportEmail:
+    Type: "String"
+    Description: "Support email address available to portfolio consumers"
+
+Resources:
+
+  StaticSitePortfolio:
+    Type: "AWS::ServiceCatalog::Portfolio"
+    Properties:
+      AcceptLanguage: "en"
+      DisplayName: "Static Site Portfolio"
+      ProviderName: !Ref "SupportEmail"
+      Tags:
+        - Key: "bjm-staticsite-version"
+          Value: "0.0.0.0"
+        - Key: "org"
+          Value: "bjm"
+        - Key: "product"
+          Value: "staticsite"
+        - Key: "module"
+          Value: "servicecatalog"
+
+  #
+  # Log Bucket
+  #
+
+  StaticSiteLogBucketProduct:
+    Type: "AWS::ServiceCatalog::CloudFormationProduct"
+    Properties:
+      AcceptLanguage: "en"
+      Distributor: !Ref "SupportEmail"
+      Name: "Static Site Log Bucket"
+      Owner: !Ref "SupportEmail"
+      ProvisioningArtifactParameters:
+        - Name: "0.0.0.0"
+          Info:
+            LoadTemplateFromURL:
+              Fn::Join:
+                - ""
+                - - "https://"
+                  - !ImportValue "service-catalog-bucket-regional-domain-name"
+                  - "/static-site-log-bucket.yaml"
+      SupportEmail: !Ref "SupportEmail"
+      Tags:
+        - Key: "bjm-staticsite-version"
+          Value: "0.0.0.0"
+        - Key: "org"
+          Value: "bjm"
+        - Key: "product"
+          Value: "staticsite"
+        - Key: "module"
+          Value: "servicecatalog"
+
+  StaticSiteLogBucketProductAssociation:
+    Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
+    Properties:
+      AcceptLanguage: "en"
+      PortfolioId: !Ref "StaticSitePortfolio"
+      ProductId: !Ref "StaticSiteLogBucketProduct"
+
+  #
+  # Log Bucket
+  #
+
+  StaticSiteRewriteUrlFunctionProduct:
+    Type: "AWS::ServiceCatalog::CloudFormationProduct"
+    Properties:
+      AcceptLanguage: "en"
+      Distributor: !Ref "SupportEmail"
+      Name: "Static Site Rewrite URL Function"
+      Owner: !Ref "SupportEmail"
+      ProvisioningArtifactParameters:
+        - Name: "0.0.0.0"
+          Info:
+            LoadTemplateFromURL:
+              Fn::Join:
+                - ""
+                - - "https://"
+                  - !ImportValue "service-catalog-bucket-regional-domain-name"
+                  - "/static-site-rewrite-url-function.yaml"
+      SupportEmail: !Ref "SupportEmail"
+      Tags:
+        - Key: "bjm-staticsite-version"
+          Value: "0.0.0.0"
+        - Key: "org"
+          Value: "bjm"
+        - Key: "product"
+          Value: "staticsite"
+        - Key: "module"
+          Value: "servicecatalog"
+
+  StaticSiteRewriteUrlFunctionProductAssociation:
+    Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
+    Properties:
+      AcceptLanguage: "en"
+      PortfolioId: !Ref "StaticSitePortfolio"
+      ProductId: !Ref "StaticSiteRewriteUrlFunctionProduct"
+
+  #
+  # Instance
+  #
+
+  StaticSiteInstanceProduct:
+    Type: "AWS::ServiceCatalog::CloudFormationProduct"
+    Properties:
+      AcceptLanguage: "en"
+      Distributor: !Ref "SupportEmail"
+      Name: "Static Site Instance"
+      Owner: !Ref "SupportEmail"
+      ProvisioningArtifactParameters:
+        - Name: "0.0.0.0"
+          Info:
+            LoadTemplateFromURL:
+              Fn::Join:
+                - ""
+                - - "https://"
+                  - !ImportValue "service-catalog-bucket-regional-domain-name"
+                  - "/static-site-instance.yaml"
+      SupportEmail: !Ref "SupportEmail"
+      Tags:
+        - Key: "bjm-staticsite-version"
+          Value: "0.0.0.0"
+        - Key: "org"
+          Value: "bjm"
+        - Key: "product"
+          Value: "staticsite"
+        - Key: "module"
+          Value: "servicecatalog"
+
+  StaticSiteInstanceProductAssociation:
+    Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
+    Properties:
+      AcceptLanguage: "en"
+      PortfolioId: !Ref "StaticSitePortfolio"
+      ProductId: !Ref "StaticSiteInstanceProduct"
