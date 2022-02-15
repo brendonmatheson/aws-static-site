@@ -50,6 +50,15 @@ Resources:
       LoggingConfiguration:
         DestinationBucketName: !ImportValue "log-bucket-name"
         LogFilePrefix: !Sub "${NakedDomainName}/"
+      Tags:
+        - Key: "bjm-staticsite-version"
+          Value: "0.0.0.0"
+        - Key: "org"
+          Value: "bjm"
+        - Key: "product"
+          Value: "staticsite"
+        - Key: "module"
+          Value: "instance"
 
   #
   # Certificates
@@ -62,6 +71,15 @@ Resources:
       ValidationMethod: "DNS"
       SubjectAlternativeNames:
         - !Sub "www.${NakedDomainName}"
+      Tags:
+        - Key: "bjm-staticsite-version"
+          Value: "0.0.0.0"
+        - Key: "org"
+          Value: "bjm"
+        - Key: "product"
+          Value: "staticsite"
+        - Key: "module"
+          Value: "instance"
 
   #
   # CloudFront
@@ -105,6 +123,15 @@ Resources:
           AcmCertificateArn: !Ref "NakedCertificate"
           MinimumProtocolVersion: "TLSv1"
           SslSupportMethod: "sni-only"
+      Tags:
+        - Key: "bjm-staticsite-version"
+          Value: "0.0.0.0"
+        - Key: "org"
+          Value: "bjm"
+        - Key: "product"
+          Value: "staticsite"
+        - Key: "module"
+          Value: "instance"
 
   NakedRecord:
     Type: "AWS::Route53::RecordSet"

@@ -42,6 +42,15 @@ Resources:
         BlockPublicPolicy: true
         RestrictPublicBuckets: true 
       AccessControl: "LogDeliveryWrite"
+      Tags:
+        - Key: "bjm-staticsite-version"
+          Value: "0.0.0.0"
+        - Key: "org"
+          Value: "bjm"
+        - Key: "product"
+          Value: "staticsite"
+        - Key: "module"
+          Value: "logbucket"
 
   LogBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
